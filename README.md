@@ -1,2 +1,2 @@
 # AutomationWars
-plz dont be INOT
+plz dont INOT
