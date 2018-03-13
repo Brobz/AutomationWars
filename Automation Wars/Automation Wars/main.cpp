@@ -14,11 +14,11 @@
 // function `resourcePath()` from ResourcePath.hpp
 //
 
-#include <SFML/Audio.hpp>
-#include <SFML/Graphics.hpp>
+#include "Map.h"
 
 // Here is a small helper for you! Have a look.
 #include "ResourcePath.hpp"
+
 
 int main(int, char const**)
 {
@@ -31,22 +31,17 @@ int main(int, char const**)
         return EXIT_FAILURE;
     }
     window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
-
+    
+    window.setVerticalSyncEnabled(true);
+    
     // Load a sprite to display
     sf::Texture texture;
     if (!texture.loadFromFile(resourcePath() + "cute_image.jpg")) {
         return EXIT_FAILURE;
     }
     sf::Sprite sprite(texture);
-
-    // Create a graphical text to display
-    sf::Font font;
-    if (!font.loadFromFile(resourcePath() + "sansation.ttf")) {
-        return EXIT_FAILURE;
-    }
-    sf::Text text("PLZ NO INOT", font, 50);
-    text.setFillColor(sf::Color::Black);
-
+    
+    Map m;
 
     // Start the game loop
     while (window.isOpen())
@@ -68,12 +63,8 @@ int main(int, char const**)
 
         // Clear screen
         window.clear();
-
-        // Draw the sprite
-        window.draw(sprite);
-
-        // Draw the string
-        window.draw(text);
+    
+        m.draw(&window);
 
         // Update the window
         window.display();
