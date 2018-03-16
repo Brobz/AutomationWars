@@ -21,11 +21,18 @@ class Cell{
 public:
     Cell();
     Cell(Vector2i _position, int _size, Color _color);
+    void update(int neighbours, float territory);
     void draw(RenderWindow *window);
     void setColor(Color c);
+    int getHp();
+    float getTerritory();
+    bool isDead();
+    Vector2i getPosition();
 private:
     Color color;
-    int size, hp;
+    int size;
+    float hp, territory;
+    bool dead;
     Vector2i position;
     vector<Vertex> vertices;
 };

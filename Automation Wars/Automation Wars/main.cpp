@@ -33,6 +33,7 @@ int main(int, char const**)
     window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
     
     window.setVerticalSyncEnabled(true);
+    window.setFramerateLimit(60);
     
     // Load a sprite to display
     sf::Texture texture;
@@ -63,7 +64,12 @@ int main(int, char const**)
 
         // Clear screen
         window.clear();
-    
+        
+        Vector2i mouse = Mouse::getPosition(window);
+        cout << m.getCell((Vector2i)window.mapPixelToCoords(mouse) / m.getCellSize())->getTerritory() << endl;
+
+        
+        m.update();
         m.draw(&window);
 
         // Update the window

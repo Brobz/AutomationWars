@@ -23,9 +23,12 @@ class Map{
 public:
     Map();
     Map(Vector2i, int);
+    void update();
     void draw(RenderWindow *window);
     Cell* getCell(Vector2i pos);
+    Cell* getCell(Vector2i pos, vector<Cell> &_cells);
     int getCellSize();
+    int toOneDimension(Vector2i coord);
 private:
     Vector2i dimensions;
     int cellSize;
