@@ -27,14 +27,18 @@ public:
     void draw(RenderWindow *window);
     Cell* getCell(Vector2i pos);
     Cell* getCell(Vector2i pos, vector<Cell> &_cells);
+    void spreadTerritory(Vector2i point);
     int getCellSize();
     int toOneDimension(Vector2i coord);
+    void loadTerritory();
 private:
     Vector2i dimensions;
+    vector<Vector2i> neighbourCoords = {Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(-1, 1), Vector2i(-1, 0), Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1)};
     int cellSize;
     vector<Vector3i> emitters;
     vector<float> territory;
     vector<Cell> cells;
+    int counter;
 };
 
 

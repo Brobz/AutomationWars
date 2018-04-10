@@ -55,6 +55,10 @@ int main(int, char const**)
             if (event.type == sf::Event::Closed) {
                 window.close();
             }
+            
+            if(event.type == Event::MouseButtonPressed){
+    
+            }
 
             // Escape pressed: exit
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) {
@@ -65,8 +69,6 @@ int main(int, char const**)
         // Clear screen
         window.clear();
         
-        Vector2i mouse = Mouse::getPosition(window);
-        cout << m.getCell((Vector2i)window.mapPixelToCoords(mouse) / m.getCellSize())->getTerritory() << endl;
 
         
         m.update();

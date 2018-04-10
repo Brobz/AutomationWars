@@ -7,14 +7,29 @@
 //
 
 #include "Map.h"
+#include <algorithm>
 
 
 Map::Map(){
+    srand(time(NULL));
     dimensions = Vector2i(800, 600);
     cellSize = 2;
-    emitters.push_back(Vector3i(200, 300, 2000));
-    emitters.push_back(Vector3i(350, 300, 2000));
-    emitters.push_back(Vector3i(650, 500, 2000));
+    emitters.push_back(Vector3i(200, 300, 3500));
+    emitters.push_back(Vector3i(450, 250, 1500));
+    emitters.push_back(Vector3i(650, 500, 2500));
+    loadTerritory();
+    int c = 5000;
+    for(int i = 0; i < c; i++){
+        Vector2i pos = Vector2i(rand() % (dimensions.x / cellSize), rand() % (dimensions.y / cellSize));
+        while(getCell(pos) != nullptr){
+            pos = Vector2i(rand() % (dimensions.x / cellSize), rand() % (dimensions.y / cellSize));
+        }
+        cells.push_back(Cell(pos, cellSize, Color(100, 100, 100), dimensions));
+    }
+}
+
+void Map::loadTerritory(){
+    territory.clear();
     for(int i = 0; i < dimensions.x / cellSize; i++){
         for(int j = 0; j < dimensions.y / cellSize; j++){
             double factor = 0;
@@ -27,57 +42,116 @@ Map::Map(){
             if(factor < 0)
                 factor = 0;
             territory.push_back(factor / 255);
-            cells.push_back(Cell(Vector2i(i, j), cellSize, Color(factor, factor, factor)));
-            
         }
     }
-    
 }
 
 void Map::update(){
-    vector<Cell> cellsCopy(cells);
-    for(int i = 0; i < cellsCopy.size(); i++){
-        Vector2i pos = cellsCopy[i].getPosition();
-        int n  = 0;
-        
-        if(pos.x != dimensions.x / cellSize - 1)
-            if(!getCell(Vector2i(pos.x + 1, pos.y))->isDead()){
-                n += 1;
+    for(int i = 0; i < cells.size(); i++){
+        Vector2i pos = cells[i].getPosition();
+        int highestTerritoryDir = 0;
+        float highestTerritory = 0;
+        bool highestTerritoryNeighbour;
+        for(int j = 0; j < neighbourCoords.size(); j++){
+            if(toOneDimension(pos + neighbourCoords[j]) >= territory.size() || toOneDimension(pos + neighbourCoords[j]) < 0)
+                continue;
+            
+            if(territory[toOneDimension(pos + neighbourCoords[j])] > highestTerritory){
+                highestTerritory = territory[toOneDimension(pos + neighbourCoords[j])];
+                highestTerritoryDir = j;
             }
-        if(pos.x != dimensions.x / cellSize - 1 && pos.y)
-            if(!getCell(Vector2i(pos.x + 1, pos.y - 1))->isDead()){
-                n += 1;
-            }
-        if(pos.x != dimensions.x / cellSize - 1 && pos.y != dimensions.y / cellSize - 1)
-            if(!getCell(Vector2i(pos.x + 1, pos.y + 1))->isDead()){
-                n += 1;
-            }
-        if(pos.y != dimensions.y / cellSize - 1)
-            if(!getCell(Vector2i(pos.x, pos.y + 1))->isDead()){
-                n += 1;
-            }
-        if(pos.x && pos.y != dimensions.y / cellSize - 1)
-            if(!getCell(Vector2i(pos.x - 1, pos.y + 1))->isDead()){
-                n += 1;
-            }
-        if(pos.x)
-            if(!getCell(Vector2i(pos.x - 1, pos.y))->isDead()){
-                n += 1;
-            }
-        if(pos.x && pos.y)
-            if(!getCell(Vector2i(pos.x - 1, pos.y - 1))->isDead()){
-                n += 1;
-            }
-        if(pos.y)
-            if(!getCell(Vector2i(pos.x, pos.y - 1))->isDead()){
-                n += 1;
-            }
+        }
         
         
-        cellsCopy[i].update(n, territory[toOneDimension(pos)]);
+        if(getCell(pos + neighbourCoords[highestTerritoryDir]) != nullptr)
+            highestTerritoryNeighbour = 1;//!(getCell(pos + neighbourCoords[highestTerritoryDir])->isDead());
+        else
+            highestTerritoryNeighbour = 0;
+        
+        cells[i].update(territory[toOneDimension(pos)], highestTerritoryNeighbour, highestTerritoryDir);
+        
+        if(cells[i].isDead()){
+            cells.erase(cells.begin() + i);
+            i--;
+            continue;
+        }
+        
+        
+        
+        if(territory[toOneDimension(pos)] > 0.2){
+            spreadTerritory(cells[i].getPosition());
+        }
+        
+    }
+    if(!(counter % 300)){
+        emitters.clear();
+        for(int i = 0; i < 3; i++){
+            emitters.push_back(Vector3i(rand() % 800 + 1, rand() % 600 + 1, rand() % 2501 + 1000));
+        }
+        loadTerritory();
+    }
+    counter++;
+}
+
+void Map::spreadTerritory(Vector2i point){
+    bool RIGHT_CORNER = (point.x == dimensions.x / cellSize - 1);
+    bool LEFT_CORNER = (!point.x);
+    bool TOP_CORNER = (!point.y);
+    bool BOTTOM_CORNER = (point.y == dimensions.y / cellSize - 1);
+    
+    float spread = territory[toOneDimension(point)] * 0.03 / 8;
+    int n = 0;
+    
+    if(!RIGHT_CORNER){
+        if(territory[toOneDimension(Vector2i(point.x + 1, point.y))] < territory[toOneDimension(point)]){
+            territory[toOneDimension(Vector2i(point.x + 1, point.y))] += spread;
+            n++;
+        }
+    }
+    if(!RIGHT_CORNER && !BOTTOM_CORNER){
+        if(territory[toOneDimension(Vector2i(point.x + 1, point.y + 1))] < territory[toOneDimension(point)]){
+            territory[toOneDimension(Vector2i(point.x + 1, point.y + 1))] += spread;
+            n++;
+        }
+    }
+    if(!BOTTOM_CORNER){
+        if(territory[toOneDimension(Vector2i(point.x, point.y + 1))] < territory[toOneDimension(point)]){
+            territory[toOneDimension(Vector2i(point.x, point.y + 1))] += spread;
+            n++;
+        }
+    }
+    if(!LEFT_CORNER && !BOTTOM_CORNER){
+        if(territory[toOneDimension(Vector2i(point.x - 1, point.y + 1))] < territory[toOneDimension(point)]){
+            territory[toOneDimension(Vector2i(point.x - 1, point.y + 1))] += spread;
+            n++;
+        }
+    }
+    if(!LEFT_CORNER){
+        if(territory[toOneDimension(Vector2i(point.x - 1, point.y))] < territory[toOneDimension(point)]){
+            territory[toOneDimension(Vector2i(point.x - 1, point.y))] += spread;
+            n++;
+        }
+    }
+    if(!LEFT_CORNER && !TOP_CORNER){
+        if(territory[toOneDimension(Vector2i(point.x - 1, point.y - 1))] < territory[toOneDimension(point)]){
+            territory[toOneDimension(Vector2i(point.x - 1, point.y - 1))] += spread;
+            n++;
+        }
+    }
+    if(!TOP_CORNER){
+        if(territory[toOneDimension(Vector2i(point.x, point.y - 1))] < territory[toOneDimension(point)]){
+            territory[toOneDimension(Vector2i(point.x, point.y - 1))] += spread;
+            n++;
+        }
+    }
+    if(!RIGHT_CORNER && !TOP_CORNER){
+        if(territory[toOneDimension(Vector2i(point.x + 1, point.y - 1))] < territory[toOneDimension(point)]){
+            territory[toOneDimension(Vector2i(point.x + 1, point.y - 1))] += spread;
+            n++;
+        }
     }
     
-    cells = cellsCopy;
+    territory[toOneDimension(point)] -= spread * n;
 }
 
 
@@ -86,7 +160,12 @@ int Map::toOneDimension(Vector2i coord){
 }
 
 Cell* Map::getCell(Vector2i pos){
-    return &cells[pos.x * dimensions.y / cellSize + pos.y];
+    for(int i = 0; i < cells.size(); i++){
+        if(cells[i].getPosition() == pos)
+            return &cells[i];
+    }
+
+    return nullptr;
 }
 
 Cell* Map::getCell(Vector2i pos, vector<Cell> &_cells){
